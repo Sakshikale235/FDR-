@@ -10,8 +10,40 @@ const nav = [
 const money = (n:number) => n >= 10000000 ? `₹${(n/10000000).toFixed(2)} Cr` : n >= 100000 ? `₹${(n/100000).toFixed(1)} L` : `₹${n.toLocaleString('en-IN')}`;
 const dateShort = (s:string) => new Date(`${s}T00:00:00`).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
 const colors = ['#46d9c0','#e7b66d','#7eb9ee','#d9828c','#a8a6ba','#e88b50'];
+
 const nativeFetch = window.fetch.bind(window);
-function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) { const token = (()=>{try{return JSON.parse(localStorage.getItem('fdr_session')||'null')?.access_token}catch{return null}})(); const headers = new Headers(init.headers || {}); if(token) headers.set('Authorization', `Bearer ${token}`); headers.delete('x-demo-role'); headers.delete('x-demo-user'); return nativeFetch(input, {...init, headers}); }
+
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || ''
+).replace(/\/+$/, '');
+
+function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  const token = (() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('fdr_session') || 'null'
+      )?.access_token;
+    } catch {
+      return null;
+    }
+  })();
+
+  const headers = new Headers(init.headers || {});
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  headers.delete('x-demo-role');
+  headers.delete('x-demo-user');
+
+  const requestUrl =
+    typeof input === 'string' && input.startsWith('/api/')
+      ? `${API_BASE_URL}${input}`
+      : input;
+
+  return nativeFetch(requestUrl, { ...init, headers });
+}
 
 
 export default function App(){
